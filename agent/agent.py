@@ -8,6 +8,8 @@ from agent.tools import (
     get_monthly_total
 )
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 def get_agent_executor(user_id:int) -> AgentExecutor:
     llm= ChatGoogleGenerativeAI(
@@ -23,7 +25,7 @@ def get_agent_executor(user_id:int) -> AgentExecutor:
 
     memory = ConversationBufferMemory(
         memory_key="chat_history",
-        return_message=True
+        return_messages=True
     )
 
     prompt =hub.pull("hwchase17/react-chat")
