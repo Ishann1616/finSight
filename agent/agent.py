@@ -1,20 +1,21 @@
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import create_react_agent,AgentExecutor
-from langchain.memory import ConversationBufferMemory
-from langchain import hub
+from langchain_core.messages import HumanMessage
+from langgraph.prebuilt import create_react_agent
 from agent.tools import (
     get_spending_summary,
     get_recent_transactions,
     get_monthly_total
 )
-import os
-from dotenv import load_dotenv
-load_dotenv()
 
-def get_agent_executor(user_id:int) -> AgentExecutor:
+def get_agent_executor(user_id:int) :
     llm= ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
-        google_api_key= os.getenv("GOOGLE_API_KEY")
+        model="gemini-2.0-flash-lite",
+        google_api_key= os.getenv("GOOGLE_API_KEY"),
+        convert_system_message_to_human=True
     )
 
     tools=[
@@ -22,22 +23,6 @@ def get_agent_executor(user_id:int) -> AgentExecutor:
         get_recent_transactions,
         get_monthly_total
     ]
-
-    memory = ConversationBufferMemory(
-        memory_key="chat_history",
-        return_messages=True
-    )
-
-    prompt =hub.pull("hwchase17/react-chat")
-
-    agent = create_react_agent(llm,tools,prompt)
-
-    executor = AgentExecutor(
-        agent= agent,
-        tools= tools,
-        memory=memory,
-        verbose=True,
-        handle_parsing_errors=True
-    )
-
-    return executor
+    
+    agent = create_react_agent(llm,tools=tools)
+    return agent

@@ -5,6 +5,7 @@ from routers import auth
 from models.transaction import Transaction
 from models.user import User
 from routers import transactions
+from agent import routes as agent_routes
 
 
 Base.metadata.create_all(bind=engine)
@@ -20,6 +21,7 @@ app.add_middleware(
 
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
+app.include_router(agent_routes.router, prefix="/agent", tags=["Agent"])
  
 @app.get("/")
 def home():
