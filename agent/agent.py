@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 from langgraph.prebuilt import create_react_agent
 from agent.tools import (
@@ -12,10 +12,10 @@ from agent.tools import (
 )
 
 def get_agent_executor(user_id:int) :
-    llm= ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash-lite",
-        google_api_key= os.getenv("GOOGLE_API_KEY"),
-        convert_system_message_to_human=True
+    llm= ChatOpenAI(
+        model="nvidia/nemotron-3-super-120b-a12b:free",
+        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
+        openai_api_base="https://openrouter.ai/api/v1"
     )
 
     tools=[
