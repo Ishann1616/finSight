@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from langchain_openai import ChatOpenAI
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from langgraph.prebuilt import create_react_agent
 from agent.tools import (
     get_spending_summary,
@@ -11,6 +11,7 @@ from agent.tools import (
     get_monthly_total,
     semantic_search_transactions
 )
+from agent.memory import load_history, save_message
 
 def get_agent_executor(user_id:int) :
     llm= ChatOpenAI(
@@ -22,8 +23,31 @@ def get_agent_executor(user_id:int) :
     tools=[
         get_spending_summary,
         get_recent_transactions,
-        get_monthly_total
+        get_monthly_total,
+        semantic_search_transactions
     ]
     
     agent = create_react_agent(llm,tools=tools)
     return agent
+
+def run_agent(user_id: int, message: str) -> str:
+    agent = get_agent_executor(user_id)
+
+    history=load_history(user_id)
+
+    messages =[]
+    for m in history:
+        if m["role"] == "human":
+            messages.append(HumanMessage(content=m["content"]))
+        else:
+            messages.append(AIMessage(content=m["content"]))
+
+    messages.append(HumanMessage(content=message))
+
+    response = agent.invoke({"messages":messages})
+    answer = response["messages"][-1].content
+
+    save_message(user_id,"human",message)
+    save_message(user_id,"assistant",answer)
+
+    return answer

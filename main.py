@@ -6,7 +6,7 @@ from models.transaction import Transaction
 from models.user import User
 from routers import transactions
 from agent import routes as agent_routes
-
+from models.conversation import Conversation
 
 Base.metadata.create_all(bind=engine)
 
