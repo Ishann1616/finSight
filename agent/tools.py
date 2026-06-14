@@ -2,6 +2,7 @@ from langchain.tools import tool
 from sqlalchemy import func
 from database import SessionLocal
 from models.transaction import Transaction
+from agent.vector_store import search_transactions
 
 
 def get_db():
@@ -74,3 +75,12 @@ def get_monthly_total(user_id: int)-> str:
         return f"Total spent this month:₹{total:.2f} "
     finally:
         db.close()
+
+@tool
+def semantic_search_transactions(query: str,user_id: int) ->str:
+    """Search transactions by meaning and context.
+    Use this when the user asks conceptual questions like
+    'when was I careless with money', 'find my impulsive spending',
+    'show me unnecessary purchases', or any question that
+    can't be answered with exact category filters."""
+    return search_transactions(query=query,user_id=user_id)

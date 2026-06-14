@@ -8,7 +8,8 @@ from langgraph.prebuilt import create_react_agent
 from agent.tools import (
     get_spending_summary,
     get_recent_transactions,
-    get_monthly_total
+    get_monthly_total,
+    semantic_search_transactions
 )
 
 def get_agent_executor(user_id:int) :
