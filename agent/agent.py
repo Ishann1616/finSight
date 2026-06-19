@@ -9,7 +9,8 @@ from agent.tools import (
     get_spending_summary,
     get_recent_transactions,
     get_monthly_total,
-    semantic_search_transactions
+    semantic_search_transactions,
+    check_affordability
 )
 from agent.memory import load_history, save_message
 
@@ -24,7 +25,8 @@ def get_agent_executor(user_id:int) :
         get_spending_summary,
         get_recent_transactions,
         get_monthly_total,
-        semantic_search_transactions
+        semantic_search_transactions,
+        check_affordability
     ]
     
     agent = create_react_agent(llm,tools=tools)

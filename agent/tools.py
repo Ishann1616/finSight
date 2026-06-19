@@ -2,6 +2,9 @@ from langchain.tools import tool
 from sqlalchemy import func
 from database import SessionLocal
 from models.transaction import Transaction
+from models.user import User
+from services.forecaster import get_forecast
+from routers.predictions import calculate_affordability
 from agent.vector_store import search_transactions
 
 
@@ -84,3 +87,24 @@ def semantic_search_transactions(query: str,user_id: int) ->str:
     'show me unnecessary purchases', or any question that
     can't be answered with exact category filters."""
     return search_transactions(query=query,user_id=user_id)
+
+@tool
+def check_affordability(amount: float, user_id: int)-> dict:
+    """Use this when the user asks if they can afford to buy something at a given price.
+    Checks their current balance against this month's forecasted spending plus a safety buffer.
+    Returns whether they can afford it, with reasoning."""
+    db=get_db()
+    try:
+        user = db.query(User).filter(User.id == user_id).first()
+
+        if not user:
+            return "User Not found"
+        
+        forecast = get_forecast(user_id)
+        predicted = forecast["predicted_total"]
+        balance = user.current_balance if user.current_balance is not None else 0.0
+        return calculate_affordability(amount,balance,predicted)
+
+    finally:
+        db.close() 
+    
