@@ -10,9 +10,17 @@ def get_forecast(user_id: int):
     ).all()
     db.close()
 
-    data = [{"ds": t.date, "y":t.amount} for t in transactions]
+    data = [
+    {"ds": t.date, "y": t.amount}
+    for t in transactions
+    if "MONEYWISE" not in t.merchant.upper()
+    ]       
     df =pd.DataFrame(data)
     df['ds']= pd.to_datetime(df['ds'], format='%d%b,%Y')    
+    df= df.groupby('ds')['y'].sum().reset_index()
+
+    print(df)
+    print(df.describe())
 
     model= Prophet()
     model.fit(df)
