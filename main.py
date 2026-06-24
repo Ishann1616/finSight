@@ -7,6 +7,7 @@ from models.user import User
 from routers import transactions
 from agent import routes as agent_routes
 from models.conversation import Conversation
+from routers import sip 
 
 Base.metadata.create_all(bind=engine)
 
@@ -22,7 +23,8 @@ app.add_middleware(
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(agent_routes.router, prefix="/agent", tags=["Agent"])
- 
+app.include_router(sip.router)
+
 @app.get("/")
 def home():
     return {"message":"FinSight API is running"}
