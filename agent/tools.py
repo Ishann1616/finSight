@@ -6,6 +6,7 @@ from models.user import User
 from services.forecaster import get_forecast
 from routers.predictions import calculate_affordability
 from agent.vector_store import search_transactions
+from models.sip_plan import SIPPlan
 
 
 def get_db():
@@ -108,3 +109,16 @@ def check_affordability(amount: float, user_id: int)-> dict:
     finally:
         db.close() 
     
+@tool
+def get_sip_summary(user_id: int) -> str:
+    """Return a summary of the user's active SIP plans and total monthly commitment"""
+    db = get_db()
+    try:
+        sips= db.query(SIPPlan).filter(SIPPlan.user_id == user_id, SIPPlan.status =="active").all()
+        if not sips:
+            return "No active SIP plans found"
+        total= sum (s.amount for s in sips)
+        details= "\n".join([f"{s.fund_name} - ₹{s.amount} on {s.due_date}th every month" for s in sips])
+        return f"Active SIPs:\n{details}\n\nTotal monthly commitment: ₹{total}"               
+    finally:
+        db.close()
