@@ -33,3 +33,13 @@ def creat_sip(sip: SIPCreate, db: Session = Depends(get_db),current_user:User = 
 @router.get("/")
 def get_sips(db: Session = Depends(get_db),current_user:User = Depends(get_current_user)):
     return db.query(SIPPlan).filter(SIPPlan.user_id == current_user.id).all()
+
+@router.delete("/{sip_id}")
+def delete_sip(sip_id: int, db:Session = Depends(get_db),current_user: User = Depends(get_current_user)):
+    sip =db.query(SIPPlan).filter(SIPPlan.id==sip_id,SIPPlan.user_id==current_user.id).first()
+    if not sip:
+        raise HTTPException(status_code=404,detail="SIP plan not found")
+    db.delete(sip)
+    db.commit()
+    return {"message":"SIP plan deleted"}
+
