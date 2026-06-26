@@ -12,7 +12,8 @@ from agent.tools import (
     semantic_search_transactions,
     check_affordability,
     get_sip_summary,
-    calculate_sip_corpus
+    calculate_sip_corpus,
+    get_fund_recommendations
 )
 from agent.memory import load_history, save_message
 
@@ -30,7 +31,8 @@ def get_agent_executor(user_id:int) :
         semantic_search_transactions,
         check_affordability,
         get_sip_summary,
-        calculate_sip_corpus
+        calculate_sip_corpus,
+        get_fund_recommendations
     ]
     
     agent = create_react_agent(llm,tools=tools)

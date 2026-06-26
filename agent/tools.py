@@ -130,3 +130,20 @@ def calculate_sip_corpus(amount:float, months:int, risk:str )-> dict:
     Use when user asks how much they'll earn from SIP, wants to plan investment,
     or asks about return for conservative/moderate/aggressive risk."""
     return calculate_sip(amount, months, risk)
+
+@tool
+def get_fund_recommendations(risk_profile:str)-> str:
+    """Recommend mutual funds based on user's risk profile.
+    Use when user asks for fund recommendations, what funds to invest in,
+    or wants suggestions for conservative/moderate/aggressive risk."""
+    db=get_db()
+    try:
+        from models.fund import Fund
+        funds=db.query(Fund).filter(Fund.risk_profile== risk_profile.lower()).all()
+        if not funds:
+            return f"No funds found for {risk_profile} risk profile."
+        result= "\n".join([f"{f.fund_name} | {f.category}{f.expected_return}% expected return" for f in funds])
+        return f"Recommended funds for {risk_profile} risk:\n{result}"
+    finally:
+        db.close()
+        
