@@ -6,6 +6,7 @@ from models.user import User
 from services.forecaster import get_forecast
 from routers.predictions import calculate_affordability
 from agent.vector_store import search_transactions
+from services.sip_calculator import calculate_sip
 from models.sip_plan import SIPPlan
 
 
@@ -122,3 +123,10 @@ def get_sip_summary(user_id: int) -> str:
         return f"Active SIPs:\n{details}\n\nTotal monthly commitment: ₹{total}"               
     finally:
         db.close()
+
+@tool
+def calculate_sip_corpus(amount:float, months:int, risk:str )-> dict:
+    """Calculate projected SIP corpus based on amount, duration, and risk apetite.
+    Use when user asks how much they'll earn from SIP, wants to plan investment,
+    or asks about return for conservative/moderate/aggressive risk."""
+    return calculate_sip(amount, months, risk)
