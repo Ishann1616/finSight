@@ -9,6 +9,7 @@ from agent import routes as agent_routes
 from models.conversation import Conversation
 from routers import sip 
 
+
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -31,3 +32,7 @@ def home():
 
 from routers import predictions 
 app.include_router(predictions.router, prefix="/predict", tags=["Predictions"])
+
+
+from routers import loans
+app.include_router(loans.router)
