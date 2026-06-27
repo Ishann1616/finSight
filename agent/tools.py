@@ -8,7 +8,8 @@ from routers.predictions import calculate_affordability
 from agent.vector_store import search_transactions
 from services.sip_calculator import calculate_sip
 from models.sip_plan import SIPPlan
-
+from models.loan import Loan
+from services.emi_calculator import calculate_emi
 
 def get_db():
     return SessionLocal()
@@ -147,3 +148,22 @@ def get_fund_recommendations(risk_profile:str)-> str:
     finally:
         db.close()
         
+
+@tool
+def get_emi_summary(user_id: int) -> str:
+    """Return a summary of the user's active loans and monthly EMI commitment.
+    Use when user asks about their loans, EMIs, or monthly loan payments."""
+    db = get_db()
+    try:
+        loans= db.query(Loan).filter(Loan.user_id == user_id, Loan.status =="active").all()
+        if not loans:
+            return "No active loans found."
+        details=[]
+        total_emi=0 
+        for loan in loans:
+           emi= calculate_emi(loan.principal,loan.annual_rate,loan.tenure_months)
+           total_emi +=emi["monthly_emi"]
+           details.append(f"{loan.loan_type} | ₹{loan.principal} | EMI: ₹{emi['monthly_emi']}/month")
+        return f"Active Loans:\n" + "\n".join(details) + f"\n\nTotal monthly EMI: ₹{round(total_emi, 2)}"
+    finally:
+        db.close()

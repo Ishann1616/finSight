@@ -13,7 +13,8 @@ from agent.tools import (
     check_affordability,
     get_sip_summary,
     calculate_sip_corpus,
-    get_fund_recommendations
+    get_fund_recommendations,
+    get_emi_summary
 )
 from agent.memory import load_history, save_message
 
@@ -32,7 +33,8 @@ def get_agent_executor(user_id:int) :
         check_affordability,
         get_sip_summary,
         calculate_sip_corpus,
-        get_fund_recommendations
+        get_fund_recommendations,
+        get_emi_summary
     ]
     
     agent = create_react_agent(llm,tools=tools)
@@ -50,7 +52,7 @@ def run_agent(user_id: int, message: str) -> str:
         else:
             messages.append(AIMessage(content=m["content"]))
 
-    messages.append(HumanMessage(content=message))
+    messages.append(HumanMessage(content=f"[user_id: {user_id}] {message}"))
 
     response = agent.invoke({"messages":messages})
     answer = response["messages"][-1].content
