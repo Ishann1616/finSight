@@ -176,3 +176,13 @@ def get_tax_estimate(annual_income: float) -> dict:
     """Calculate income tax based on annual income using new regime slabs.
     Use when user asks how much tax they owe, tax estimate, or income tax calculation."""
     return calculate_tax(annual_income)
+
+from services.loan_advisor import loan_advisor
+
+@tool
+def get_loan_advice(loan_type: str, amount: float, tenure_months: int) -> dict:
+    """Provide loan advice, EMI calculation, and verdict for home, car, or personal loans.
+    Use when user asks about taking a loan, loan interest rates, whether a loan is worth it,
+    or wants to know EMI for a specific loan amount and duration.
+    DO NOT use get_spending_summary for loan questions."""
+    return loan_advisor(loan_type, amount, tenure_months)
