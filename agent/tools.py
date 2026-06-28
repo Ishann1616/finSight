@@ -186,3 +186,31 @@ def get_loan_advice(loan_type: str, amount: float, tenure_months: int) -> dict:
     or wants to know EMI for a specific loan amount and duration.
     DO NOT use get_spending_summary for loan questions."""
     return loan_advisor(loan_type, amount, tenure_months)
+
+from models.banks import Bank
+
+@tool
+def get_bank_recommendations(loan_type: str, bank_name: str= None) ->str:
+    """Recommend banks for a loan type sorted by lowest interest rate.
+    Use when user asks which bank is best for home/car/personal loan,
+    or wants to compare bank loan rates, or mentions their specific bank."""
+    db= get_db()
+    try:
+        all_bank = db.query(Bank).filter(Bank.loan_type == loan_type.lower())
+        if bank_name:
+            user_bank= db.query(Bank).filter(
+                Bank>loan_type == loan_type.lower(),
+                Bank.bank_name.ilike(f"%{bank_name}%")
+            ).first()
+        banks= all_bank.order_by(Bank.interest_rate).all()
+        if not banks:
+            return f"No data found for {loan_type} loans."
+        result="\n".join([
+            f"{b.bank_name} | {b.interest_rate}% |  Processing: {b.processing_fee}% | Max tenure: {b.max_tenure_months} months"
+            for b in banks
+        ])
+        if bank_name and user_bank :
+            return f"Your bank ({user_bank.bank_name}) offers {user_bank.interest_rate}% for {loan_type} loans.\n\nAll banks sorted by rate:\n{result}\n\nNote: Rates as of 2026. Verify with bank before applying."
+        return f"Best banks for {loan_type} loan (sorted by rate):\n{result}\n\nNote: Rates as of 2026. Verify with bank before applying."
+    finally:
+        db.close()

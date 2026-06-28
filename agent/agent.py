@@ -16,7 +16,8 @@ from agent.tools import (
     get_fund_recommendations,
     get_emi_summary,
     get_tax_estimate,
-    get_loan_advice
+    get_loan_advice,
+    get_bank_recommendations
 )
 from agent.memory import load_history, save_message
 
@@ -38,7 +39,8 @@ def get_agent_executor(user_id:int) :
         get_fund_recommendations,
         get_emi_summary,
         get_tax_estimate,
-        get_loan_advice
+        get_loan_advice,
+        get_bank_recommendations
     ]
     
     agent = create_react_agent(llm,tools=tools)

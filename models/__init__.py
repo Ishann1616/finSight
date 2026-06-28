@@ -4,3 +4,4 @@ from .conversation import Conversation
 from .fund import Fund
 from .sip_plan import SIPPlan
 from .loan import Loan
+from .banks import Bank
