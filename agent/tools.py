@@ -11,6 +11,7 @@ from models.sip_plan import SIPPlan
 from models.loan import Loan
 from services.emi_calculator import calculate_emi
 
+
 def get_db():
     return SessionLocal()
 
@@ -167,3 +168,11 @@ def get_emi_summary(user_id: int) -> str:
         return f"Active Loans:\n" + "\n".join(details) + f"\n\nTotal monthly EMI: ₹{round(total_emi, 2)}"
     finally:
         db.close()
+
+from services.tax_calculator import calculate_tax
+
+@tool
+def get_tax_estimate(annual_income: float) -> dict:
+    """Calculate income tax based on annual income using new regime slabs.
+    Use when user asks how much tax they owe, tax estimate, or income tax calculation."""
+    return calculate_tax(annual_income)

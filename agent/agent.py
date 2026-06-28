@@ -14,7 +14,8 @@ from agent.tools import (
     get_sip_summary,
     calculate_sip_corpus,
     get_fund_recommendations,
-    get_emi_summary
+    get_emi_summary,
+    get_tax_estimate
 )
 from agent.memory import load_history, save_message
 
@@ -34,7 +35,8 @@ def get_agent_executor(user_id:int) :
         get_sip_summary,
         calculate_sip_corpus,
         get_fund_recommendations,
-        get_emi_summary
+        get_emi_summary,
+        get_tax_estimate
     ]
     
     agent = create_react_agent(llm,tools=tools)
