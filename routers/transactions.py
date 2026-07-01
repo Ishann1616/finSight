@@ -4,6 +4,7 @@ from database import get_db
 from models.transaction import Transaction
 from services.pdf_parser import parse_statement_pdf
 from services.categorizer import categorize
+from services.ml_categorizer import ml_categorize
 import shutil
 import os
 
@@ -20,7 +21,7 @@ def upload_statement(file: UploadFile = File(...), user_id:int =1,db: Session = 
 
     saved = 0
     for t in transactions:
-        category = categorize(t["merchant"])
+        category = ml_categorize(t["merchant"])
         new_transaction = Transaction(
             user_id=user_id,
             merchant=t["merchant"],
