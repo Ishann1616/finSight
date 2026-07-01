@@ -22,6 +22,14 @@ CATEGORIES = {
     ],
     "Education": [
         "udemy", "coursera", "books", "stationery", "college", "school"
+    ],
+    "Investment": [
+        "moneywise", "groww", "zerodha", "kuvera", "coin", "mutual fund",
+        "mf", "sip", "stock", "demat", "angel", "upstox"
+    ],
+    "Pass-Through": [
+        "transfer to", "neft", "imps", "rtgs", "sent to", "received from",
+        "family", "father", "mother", "papa", "mom"
     ]
 }
 

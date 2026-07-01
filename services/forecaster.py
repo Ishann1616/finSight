@@ -13,7 +13,7 @@ def get_forecast(user_id: int):
     data = [
     {"ds": t.date, "y": t.amount}
     for t in transactions
-    if "MONEYWISE" not in t.merchant.upper()
+    if t.category!= "Pass-Through"
     ]       
     df =pd.DataFrame(data)
     df['ds']= pd.to_datetime(df['ds'], format='%d%b,%Y')    
