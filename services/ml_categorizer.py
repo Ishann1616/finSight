@@ -2,6 +2,8 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
 from services.categorizer import categorize, CATEGORIES
+from database import SessionLocal
+from models.transaction import Transaction
 
 def build_training_data():
     merchants=[]
@@ -30,3 +32,16 @@ def ml_categorize(merchant: str) -> str:
         return keyword_result
     prediction = ml_model.predict([merchant.lower()])[0]
     return prediction
+
+def backfill_categories(user_id: int):
+    db= SessionLocal()
+    transactions= db.query(Transaction).filter(
+        Transaction.user_id== user_id,
+        Transaction.category == "Uncategorized"
+    ).all()
+
+    for t in transactions:
+        t.category = ml_categorize(t.merchant)
+
+    db.commit()
+    db.close()
