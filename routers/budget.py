@@ -4,7 +4,7 @@ from sqlalchemy import extract
 from database import get_db
 from models.budget import Budget
 from models.transaction import Transaction
-from datetime import datetime
+from datetime import datetime,date
 from pydantic import BaseModel
 
 router = APIRouter()
@@ -45,3 +45,16 @@ def get_alerts(user_id: int =1, db: Session = Depends(get_db)):
         elif percent >= 80:
             alerts.append({"category": b.category, "status": "WARNING", "percent": percent})
     return alerts
+
+@router.get("/uplaod-reminder")
+def upload_reminder(user_id: int = 1, db: Session = Depends(get_db)):
+    today = date.today()
+    if today.day <= 5:
+        return{
+            "reminder":True,
+            "message":"Don't forget to upload this month's bank statement!"
+        }
+    return{
+         "reminder": False,
+        "message": "No reminder needed"
+    }
