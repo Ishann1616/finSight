@@ -36,3 +36,6 @@ app.include_router(predictions.router, prefix="/predict", tags=["Predictions"])
 
 from routers import loans
 app.include_router(loans.router)
+
+from routers import budget
+app.include_router(budget.router, prefix='/budget', tags=["Budget"])
