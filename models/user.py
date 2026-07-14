@@ -11,4 +11,4 @@ class User(Base):
     password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True),server_default=func.now())
     current_balance = Column(Float, nullable=True,default=0.0)
-    
+    bank_name = Column(String, nullable=True)
