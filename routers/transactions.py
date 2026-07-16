@@ -2,16 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from database import get_db
 from models.transaction import Transaction
+from models.user import User
 from services.pdf_parser import parse_statement_pdf
-from services.categorizer import categorize
 from services.ml_categorizer import ml_categorize
+from routers.auth import get_current_user
 import shutil
 import os
 
 router = APIRouter()
 
 @router.post("/upload")
-def upload_statement(file: UploadFile = File(...), user_id:int =1,db: Session = Depends(get_db)):
+def upload_statement(file: UploadFile = File(...), db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     temp_path=f"temp_{file.filename}"
     with open(temp_path,"wb") as buffer:
         shutil.copyfileobj(file.file,buffer)
@@ -23,7 +24,7 @@ def upload_statement(file: UploadFile = File(...), user_id:int =1,db: Session = 
     for t in transactions:
         category = ml_categorize(t["merchant"])
         new_transaction = Transaction(
-            user_id=user_id,
+            user_id=current_user.id,
             merchant=t["merchant"],
             amount=t["amount"],
             category=category,
@@ -37,16 +38,22 @@ def upload_statement(file: UploadFile = File(...), user_id:int =1,db: Session = 
     return {"message": f"Successfully saved {saved} transactions"}
 
 @router.get("/")
-def get_transactions(user_id: int = 1, db: Session = Depends(get_db)):
-    transactions = db.query(Transaction).filter(Transaction.user_id == user_id).all()
+def get_transactions(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
     return transactions
 
 @router.get("/summary")
-def get_summary(user_id: int = 1, db: Session = Depends(get_db)):
-    transactions = db.query(Transaction).filter(Transaction.user_id == user_id).all()
+def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
     summary = {}
     for t in transactions:
         if t.category not in summary:
             summary[t.category] = 0
         summary[t.category] += t.amount
     return summary
+
+@router.post("/backfill")
+def backfill(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    from services.ml_categorizer import backfill_categories
+    backfill_categories(current_user.id)
+    return {"message": "Backfill complete"}
