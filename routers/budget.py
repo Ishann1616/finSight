@@ -4,8 +4,10 @@ from sqlalchemy import extract
 from database import get_db
 from models.budget import Budget
 from models.transaction import Transaction
-from datetime import datetime,date
+from models.user import User
+from datetime import datetime, date
 from pydantic import BaseModel
+from routers.auth import get_current_user
 
 router = APIRouter()
 
@@ -14,47 +16,41 @@ class BudgetCreate(BaseModel):
     limit: float
 
 @router.post("/")
-def set_budget(budget: BudgetCreate, user_id:int =1, db: Session= Depends(get_db)):
-    existing= db.query(Budget).filter(
-        Budget.user_id == user_id,
+def set_budget(budget: BudgetCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    existing = db.query(Budget).filter(
+        Budget.user_id == current_user.id,
         Budget.category == budget.category
     ).first()
     if existing:
-        existing.limit= budget.limit
+        existing.limit = budget.limit
     else:
-        db.add(Budget(user_id = user_id, category = budget.category,limit= budget.limit))
+        db.add(Budget(user_id=current_user.id, category=budget.category, limit=budget.limit))
     db.commit()
     return {"message": f"Budget set for {budget.category}"}
 
 @router.get("/alerts")
-def get_alerts(user_id: int =1, db: Session = Depends(get_db)):
-    budgets = db.query(Budget).filter(Budget.user_id==user_id).all()
-    now =datetime.now()
-    alerts=[]
+def get_alerts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    budgets = db.query(Budget).filter(Budget.user_id == current_user.id).all()
+    now = datetime.now()
+    alerts = []
     for b in budgets:
         transactions = db.query(Transaction).filter(
-            Transaction.user_id == user_id,
+            Transaction.user_id == current_user.id,
             Transaction.category == b.category,
-            extract('month', Transaction.created_at)== now.month,
+            extract('month', Transaction.created_at) == now.month,
             extract('year', Transaction.created_at) == now.year,
         ).all()
         spent = sum(t.amount for t in transactions)
-        percent = round((spent/b.limit)*100,1)
-        if percent >=100:
-            alerts.append({"category": b.category, "status": "EXCEEDED", "percent":percent})
+        percent = round((spent / b.limit) * 100, 1)
+        if percent >= 100:
+            alerts.append({"category": b.category, "status": "EXCEEDED", "percent": percent})
         elif percent >= 80:
             alerts.append({"category": b.category, "status": "WARNING", "percent": percent})
     return alerts
 
-@router.get("/upload_reminder")
-def upload_reminder(user_id: int = 1, db: Session = Depends(get_db)):
+@router.get("/upload-reminder")
+def upload_reminder(current_user: User = Depends(get_current_user)):
     today = date.today()
     if today.day <= 5:
-        return{
-            "reminder":True,
-            "message":"Don't forget to upload this month's bank statement!"
-        }
-    return{
-        "reminder": False,
-        "message": "No reminder needed"
-    }
+        return {"reminder": True, "message": "Don't forget to upload this month's bank statement!"}
+    return {"reminder": False, "message": "No reminder needed"}
