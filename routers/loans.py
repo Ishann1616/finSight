@@ -38,7 +38,7 @@ def get_loan(db: Session = Depends(get_db), current_user: User= Depends(get_curr
 
 @router.delete("/{loan_id}")
 def delete_loan(loan_id: int, db: Session = Depends(get_db), current_user: User= Depends(get_current_user)):
-    loan= db.query(Loan).filter(Loan.id == loan_id, Loan.user_id == current_user,id).first()
+    loan= db.query(Loan).filter(Loan.id == loan_id, Loan.user_id == current_user.id).first()
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
     db.delete(loan)
