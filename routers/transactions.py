@@ -8,6 +8,7 @@ from services.ml_categorizer import ml_categorize
 from routers.auth import get_current_user
 import shutil
 import os
+from datetime import datetime
 
 router = APIRouter()
 
@@ -45,8 +46,14 @@ def get_transactions(db: Session = Depends(get_db), current_user: User = Depends
 @router.get("/summary")
 def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
+
+    now = datetime.now()
+    month_str = now.strftime("%b,%Y")
+
     summary = {}
     for t in transactions:
+        if month_str not in t.date:
+            continue
         if t.category not in summary:
             summary[t.category] = 0
         summary[t.category] += t.amount
