@@ -8,19 +8,37 @@ from jose import jwt
 from datetime import datetime, timedelta
 from config import SECRET_KEY,ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
 from fastapi.security import OAuth2PasswordBearer
+from typing import Optional
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 router = APIRouter()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
 class UserCreate(BaseModel):
     name:str
-    email:str
-    password:str
-    bank_name: str = None
+    email: str
+    password: str
+    bank_name: Optional[str]= None
     current_balance: float
 
+
+
+
+class UserProfileResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    bank_name: Optional[str] = None
+    current_balance: float
+
+    class Config:
+        from_attributes = True
 
 class UserResponse(BaseModel):
     id:int
@@ -29,7 +47,6 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes =True
-
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -44,10 +61,6 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return new_user
 
 # LOGIN
-
-class UserLogin(BaseModel):
-    email:str
-    password:str
 
 def create_token(data:dict):
     to_encode = data.copy()
@@ -80,3 +93,7 @@ def get_current_user(
         return user
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+@router.get("/me", response_model=UserProfileResponse)
+def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
