@@ -28,17 +28,16 @@ class UserCreate(BaseModel):
     current_balance: float
 
 
-
-
 class UserProfileResponse(BaseModel):
     id: int
     name: str
     email: str
     bank_name: Optional[str] = None
-    current_balance: float
+    current_balance: Optional[float] = 0.0
 
     class Config:
         from_attributes = True
+
 
 class UserResponse(BaseModel):
     id:int
@@ -47,6 +46,7 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes =True
+
 
 @router.post("/register", response_model=UserResponse)
 def register(user: UserCreate, db: Session = Depends(get_db)):
@@ -93,6 +93,7 @@ def get_current_user(
         return user
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
+
 
 @router.get("/me", response_model=UserProfileResponse)
 def get_me(current_user: User = Depends(get_current_user)):
