@@ -37,8 +37,6 @@ def get_alerts(db: Session = Depends(get_db), current_user: User = Depends(get_c
         transactions = db.query(Transaction).filter(
             Transaction.user_id == current_user.id,
             Transaction.category == b.category,
-            extract('month', Transaction.created_at) == now.month,
-            extract('year', Transaction.created_at) == now.year,
         ).all()
         spent = sum(t.amount for t in transactions)
         percent = round((spent / b.limit) * 100, 1)
