@@ -55,5 +55,3 @@ def upload_reminder(current_user: User = Depends(get_current_user)):
     return {"reminder": False, "message": "No reminder needed"}
 
 
-def time_passFunc():
-    return "just her eto fuck around"
