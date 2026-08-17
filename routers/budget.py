@@ -32,13 +32,14 @@ def set_budget(budget: BudgetCreate, db: Session = Depends(get_db), current_user
 def get_alerts(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     budgets = db.query(Budget).filter(Budget.user_id == current_user.id).all()
     now = datetime.now()
+    month_str=now.strftime("%b,%Y")
     alerts = []
     for b in budgets:
         transactions = db.query(Transaction).filter(
             Transaction.user_id == current_user.id,
             Transaction.category == b.category,
         ).all()
-        spent = sum(t.amount for t in transactions)
+        spent = sum(t.amount for t in transactions if month_str in t.date)
         percent = round((spent / b.limit) * 100, 1)
         if percent >= 100:
             alerts.append({"category": b.category, "status": "EXCEEDED", "percent": percent})
@@ -52,3 +53,7 @@ def upload_reminder(current_user: User = Depends(get_current_user)):
     if today.day <= 5:
         return {"reminder": True, "message": "Don't forget to upload this month's bank statement!"}
     return {"reminder": False, "message": "No reminder needed"}
+
+
+def time_passFunc():
+    return "just her eto fuck around"
