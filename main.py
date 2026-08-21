@@ -15,12 +15,16 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://fin-sight-front-end-1.vercel.app",
+        "https://fin-sight-front-end-1-git-main-ishan-finsight.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
+   
 app.include_router(transactions.router, prefix="/transactions", tags=["Transactions"])
 app.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 app.include_router(agent_routes.router, prefix="/agent", tags=["Agent"])

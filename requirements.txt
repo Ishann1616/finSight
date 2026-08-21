@@ -74,18 +74,11 @@ threadpoolctl==3.6.0
 tqdm==4.67.3
 typer==0.26.6
 typing-inspection==0.4.2
-typing_extensions==4.15.0
-urllib3==2.7.0
-uvicorn==0.48.0
-uvloop==0.22.1
-watchfiles==1.2.0
-websockets==16.0
 langchain
 langchain-anthropic
 langchain-community
 langchain-google-genai
-echo "chromadb" >> requirements.txt
-echo "langchain-chroma" >> requirements.txt
-echo "sentence-transformers" >> requirements.txtlangchain-huggingface
-chromadb
+langchain-huggingface
 langchain-chroma
+chromadb
+sentence-transformers
