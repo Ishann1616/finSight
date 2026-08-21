@@ -23,9 +23,9 @@ def parse_statement_pdf(pdf_path: str) -> list:
                     amount = float(amount_match.group(1).replace(',', ''))
                     
                     merchant = "Unknown"
-                    if 'Paidto' in line:
+                    if 'Paid to' in line:
                         merchant = line.split('Paidto')[-1].split('₹')[0].strip()
-                    elif 'Receivedfrom' in line:
+                    elif 'Received from' in line:
                         merchant = line.split('Receivedfrom')[-1].split('₹')[0].strip()
                     
                     transactions.append({
