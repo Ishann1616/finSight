@@ -98,3 +98,22 @@ def get_current_user(
 @router.get("/me", response_model=UserProfileResponse)
 def get_me(current_user: User = Depends(get_current_user)):
     return current_user
+
+# Demo
+@router.post("/demo-login")
+def demo_login(db: Session = Depends(get_db)):
+    demo_user= db.query(User).filter(User.email == "demo@finsight.app").first()
+    if not demo_user:
+        demo_user = User(
+            name="Demo User",
+            email="demo@finsight.app",
+            password=pwd_context.hash("not-a-real-password-demo-only"),
+            bank_name="Demo Bank",
+            current_balance=125000.0
+        )
+        db.add(demo_user)
+        db.commit()
+        db.refresh(demo_user)
+
+    token= create_token({"user": demo_user.id})
+    return {"access_token": token, "token_type": "bearer"}
