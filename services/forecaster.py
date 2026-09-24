@@ -6,37 +6,50 @@ from datetime import datetime
 
 
 def get_forecast(user_id: int):
-    db= SessionLocal()
-    transactions= db.query(Transaction).filter(
+    db = SessionLocal()
+    transactions = db.query(Transaction).filter(
         Transaction.user_id == user_id
     ).all()
     db.close()
 
     data = [
-    {"ds": t.date, "y": t.amount}
-    for t in transactions
-    if t.category!= "Pass-Through"
-    ]       
-    df =pd.DataFrame(data)
-    df['ds']= pd.to_datetime(df['ds'], format='%d%b,%Y')    
-    df= df.groupby('ds')['y'].sum().reset_index()
+        {"ds": t.date, "y": t.amount}
+        for t in transactions
+        if t.category != "Pass-Through"
+    ]
 
-    print(df)
-    print(df.describe())
+    if len(data) < 2:
+        return {
+            "predicted_total": 0,
+            "currency": "INR",
+            "message": "Not enough transaction history to generate a forecast. Upload at least a few transactions first."
+        }
 
-    model= Prophet()
+    df = pd.DataFrame(data)
+    df['ds'] = pd.to_datetime(df['ds'], format='%d%b,%Y')
+    df = df.groupby('ds')['y'].sum().reset_index()
+
+    if len(df) < 2:
+        return {
+            "predicted_total": 0,
+            "currency": "INR",
+            "message": "Not enough transaction history to generate a forecast. Upload at least a few transactions first."
+        }
+
+    model = Prophet()
     model.fit(df)
 
-    future= model.make_future_dataframe(periods=30)
-    forecast= model.predict(future)
+    future = model.make_future_dataframe(periods=30)
+    forecast = model.predict(future)
 
-    next_month = forecast[['ds','yhat']].tail(30)
-    total = round(next_month['yhat'].sum(),2)
+    next_month = forecast[['ds', 'yhat']].tail(30)
+    total = round(next_month['yhat'].sum(), 2)
 
-    return{
+    return {
         "predicted_total": total,
         "currency": "INR"
     }
+
 
 def get_forecast_accuracy(user_id: int):
     db = SessionLocal()
@@ -59,7 +72,7 @@ def get_forecast_accuracy(user_id: int):
         accuracy = None
     else:
         accuracy = round((1 - abs(actual - predicted) / actual) * 100, 2)
-    return{
+    return {
         "actual": actual,
         "predicted": predicted,
         "accuracy_percent": accuracy,

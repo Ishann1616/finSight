@@ -23,9 +23,10 @@ from agent.memory import load_history, save_message
 
 def get_agent_executor(user_id:int) :
     llm= ChatOpenAI(
-        model="nvidia/nemotron-3-super-120b-a12b:free",
-        openai_api_key=os.getenv("OPENROUTER_API_KEY"),
-        openai_api_base="https://openrouter.ai/api/v1"
+        model="nvidia/nemotron-3.5-lightning-30b-a3b",
+        openai_api_key=os.getenv("NVIDIA_API_KEY"),
+        openai_api_base="https://integrate.api.nvidia.com/v1",
+        temperature=0
     )
 
     tools=[

@@ -115,5 +115,5 @@ def demo_login(db: Session = Depends(get_db)):
         db.commit()
         db.refresh(demo_user)
 
-    token= create_token({"user": demo_user.id})
+    token= create_token({"user_id": demo_user.id})
     return {"access_token": token, "token_type": "bearer"}
