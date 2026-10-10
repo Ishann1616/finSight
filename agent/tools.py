@@ -10,6 +10,7 @@ from services.sip_calculator import calculate_sip
 from models.sip_plan import SIPPlan
 from models.loan import Loan
 from services.emi_calculator import calculate_emi
+from datetime import datetime
 
 
 def get_db():
@@ -40,23 +41,27 @@ def get_spending_summary(user_id: int)-> str:
         db.close()
 
 
+def _parse_date(date_str: str):
+    try:
+        return datetime.strptime(date_str, "%d%b,%Y")
+    except ValueError:
+        return datetime.min
+
+
 @tool
-def get_recent_transactions(user_id: int)-> str:
+def get_recent_transactions(user_id: int) -> str:
     """Get the 10 most recent transactions for a user.
     Use this when the user asks about recent spending,
-    last purchase, or what they bought recently. """
-    db=get_db()
+    last purchase, or what they bought recently."""
+    db = get_db()
     try:
-        txns= db.query(Transaction).filter(
-            Transaction.user_id == user_id
-        ).order_by(Transaction.created_at.desc()).limit(10).all()
-
+        txns = db.query(Transaction).filter(Transaction.user_id == user_id).all()
         if not txns:
-            return "No transcations found"
-        
+            return "No transactions found"
+        txns.sort(key=lambda t: _parse_date(t.date), reverse=True)
         result = "\n".join([
-            f"{t.date} | {t.merchant} | ₹{t.amount} |{t.category}"
-            for t in txns
+            f"{t.date} | {t.merchant} | ₹{t.amount} | {t.category}"
+            for t in txns[:10]
         ])
         return f"Recent transactions:\n{result}"
     finally:
@@ -64,22 +69,18 @@ def get_recent_transactions(user_id: int)-> str:
 
 
 @tool
-def get_monthly_total(user_id: int)-> str:
-    """Get the total amount spend this month by a user.
-    Use this when the user asks how much they spend this 
-    month or wants their monthly total."""
-    db=get_db()
+def get_monthly_total(user_id: int) -> str:
+    """Get the total amount spent in a month by a user.
+    Use this when the user asks how much they spent this month or wants their monthly total."""
+    db = get_db()
     try:
-        from datetime import datetime
-        current_month = datetime.now().strftime("%Y-%m")
-
-        total = db.query(func.sum(Transaction.amount)).filter(
-            Transaction.user_id == user_id,
-            Transaction.date.like(f"{current_month}%")
-        ).scalar()
-
-        total= total or 0
-        return f"Total spent this month:₹{total:.2f} "
+        txns = db.query(Transaction).filter(Transaction.user_id == user_id).all()
+        if not txns:
+            return "No transactions found."
+        dated = [(_parse_date(t.date), t) for t in txns]
+        latest = max(d for d, _ in dated)
+        total = sum(t.amount for d, t in dated if (d.year, d.month) == (latest.year, latest.month))
+        return f"Total spent in {latest.strftime('%b %Y')} (the most recent month with data): ₹{total:.2f}"
     finally:
         db.close()
 
