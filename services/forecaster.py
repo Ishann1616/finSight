@@ -1,80 +1,49 @@
-from prophet import Prophet
-import pandas as pd
+from collections import defaultdict
+from datetime import datetime
 from database import SessionLocal
 from models.transaction import Transaction
-from datetime import datetime
 
+NOT_ENOUGH = {
+    "predicted_total": 0,
+    "currency": "INR",
+    "message": "Not enough history to forecast. Upload statements covering at least 2 full months.",
+}
+
+def _monthly_totals(user_id: int) -> dict:
+    db = SessionLocal()
+    try:
+        rows = db.query(Transaction).filter(
+            Transaction.user_id == user_id,
+            Transaction.category != "Pass-Through",
+        ).all()
+    finally:
+        db.close()
+
+    totals = defaultdict(float)
+    for t in rows:
+        d = datetime.strptime(t.date, "%d%b,%Y")
+        totals[(d.year, d.month)] += t.amount
+
+    now = datetime.now()
+    totals.pop((now.year, now.month), None)  # skip the in-progress month
+    return dict(sorted(totals.items()))
+
+def _weighted_avg(values: list) -> float:
+    recent = values[-3:]
+    weights = range(1, len(recent) + 1)  # latest month weighs most
+    return sum(v * w for v, w in zip(recent, weights)) / sum(weights)
 
 def get_forecast(user_id: int):
-    db = SessionLocal()
-    transactions = db.query(Transaction).filter(
-        Transaction.user_id == user_id
-    ).all()
-    db.close()
-
-    data = [
-        {"ds": t.date, "y": t.amount}
-        for t in transactions
-        if t.category != "Pass-Through"
-    ]
-
-    if len(data) < 2:
-        return {
-            "predicted_total": 0,
-            "currency": "INR",
-            "message": "Not enough transaction history to generate a forecast. Upload at least a few transactions first."
-        }
-
-    df = pd.DataFrame(data)
-    df['ds'] = pd.to_datetime(df['ds'], format='%d%b,%Y')
-    df = df.groupby('ds')['y'].sum().reset_index()
-
-    if len(df) < 2:
-        return {
-            "predicted_total": 0,
-            "currency": "INR",
-            "message": "Not enough transaction history to generate a forecast. Upload at least a few transactions first."
-        }
-
-    model = Prophet()
-    model.fit(df)
-
-    future = model.make_future_dataframe(periods=30)
-    forecast = model.predict(future)
-
-    next_month = forecast[['ds', 'yhat']].tail(30)
-    total = round(next_month['yhat'].sum(), 2)
-
-    return {
-        "predicted_total": total,
-        "currency": "INR"
-    }
-
+    values = list(_monthly_totals(user_id).values())
+    if len(values) < 2:
+        return NOT_ENOUGH
+    return {"predicted_total": round(_weighted_avg(values), 2), "currency": "INR"}
 
 def get_forecast_accuracy(user_id: int):
-    db = SessionLocal()
-    now = datetime.now()
-    last_month = now.month - 1 if now.month > 1 else 12
-    last_month_year = now.year if now.month > 1 else now.year - 1
-
-    month_names = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
-    month_str = f"{month_names[last_month - 1]},{last_month_year}"
-
-    transactions = db.query(Transaction).filter(
-        Transaction.user_id == user_id,
-        Transaction.category != "Pass-Through",
-    ).all()
-    db.close()
-
-    actual = round(sum(t.amount for t in transactions if month_str in t.date), 2)
-    predicted = get_forecast(user_id)["predicted_total"]
-    if actual == 0:
-        accuracy = None
-    else:
-        accuracy = round((1 - abs(actual - predicted) / actual) * 100, 2)
-    return {
-        "actual": actual,
-        "predicted": predicted,
-        "accuracy_percent": accuracy,
-        "currency": "INR"
-    }
+    values = list(_monthly_totals(user_id).values())
+    if len(values) < 3:
+        return {"actual": 0, "predicted": 0, "accuracy_percent": None, "currency": "INR"}
+    actual = round(values[-1], 2)
+    predicted = round(_weighted_avg(values[:-1]), 2)
+    accuracy = round((1 - abs(actual - predicted) / actual) * 100, 2) if actual else None
+    return {"actual": actual, "predicted": predicted, "accuracy_percent": accuracy, "currency": "INR"}

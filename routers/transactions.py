@@ -23,6 +23,8 @@ def upload_statement(file: UploadFile = File(...), db: Session = Depends(get_db)
 
     saved = 0
     for t in transactions:
+        if t["direction"] == "credit":
+            continue
         category = ml_categorize(t["merchant"])
         new_transaction = Transaction(
             user_id=current_user.id,
