@@ -45,21 +45,29 @@ def get_transactions(db: Session = Depends(get_db), current_user: User = Depends
     transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
     return transactions
 
+def _parse(d: str):
+    return datetime.strptime(d, "%d%b,%Y")
+
 @router.get("/summary")
 def get_summary(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     transactions = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
-
-    now = datetime.now()
-    month_str = now.strftime("%b,%Y")
-
+    if not transactions:
+        return {}
+    dated = [(_parse(t.date), t) for t in transactions]
+    latest = max(d for d, _ in dated)
     summary = {}
-    for t in transactions:
-        if month_str not in t.date:
-            continue
-        if t.category not in summary:
-            summary[t.category] = 0
-        summary[t.category] += t.amount
+    for d, t in dated:
+        if (d.year, d.month) == (latest.year, latest.month):
+            summary[t.category] = summary.get(t.category, 0) + t.amount
     return summary
+
+@router.get("/latest-month")
+def latest_month(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    rows = db.query(Transaction.date).filter(Transaction.user_id == current_user.id).all()
+    if not rows:
+        return {"label": None}
+    latest = max(_parse(r[0]) for r in rows)
+    return {"label": latest.strftime("%b %Y")}
 
 @router.post("/backfill")
 def backfill(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
