@@ -78,8 +78,7 @@ langchain
 langchain-anthropic
 langchain-community
 langchain-google-genai
-langchain-huggingface
 langchain-chroma
 chromadb
-sentence-transformers
 langchain-openai
+fastembed==0.9.0

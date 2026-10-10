@@ -1,14 +1,25 @@
+from functools import lru_cache
+from fastembed import TextEmbedding
+from langchain_core.embeddings import Embeddings
 from langchain_chroma import Chroma
-from langchain_huggingface import HuggingFaceEmbeddings
 from database import SessionLocal
 from models.transaction import Transaction
 
-CHROMA_PATH ="./chroma_db"
+CHROMA_PATH = "./chroma_db"
 
+class FastEmbeddings(Embeddings):
+    def __init__(self):
+        self.model = TextEmbedding("sentence-transformers/all-MiniLM-L6-v2")
+
+    def embed_documents(self, texts):
+        return [v.tolist() for v in self.model.embed(texts)]
+
+    def embed_query(self, text):
+        return next(iter(self.model.embed([text]))).tolist()
+
+@lru_cache(maxsize=1)
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="all-MiniLM-L6-v2"
-    )
+    return FastEmbeddings()   # loaded once, reused
 
 def load_transactions_to_chroma(user_id: int):
     db= SessionLocal()
@@ -27,6 +38,12 @@ def load_transactions_to_chroma(user_id: int):
 
         ids = [str(t.id) for t in transactions]
 
+        try:
+            Chroma(collection_name=f"user_{user_id}_transactions",
+                embedding_function=get_embeddings(),
+                persist_directory=CHROMA_PATH).delete_collection()
+        except Exception:
+            pass
         vectorstore = Chroma(
             collection_name=f"user_{user_id}_transactions",
             embedding_function=get_embeddings(),
