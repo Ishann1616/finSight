@@ -30,8 +30,10 @@ def ml_categorize(merchant: str) -> str:
     keyword_result = categorize(merchant)
     if keyword_result != "Uncategorized":
         return keyword_result
-    prediction = ml_model.predict([merchant.lower()])[0]
-    return prediction
+    probs = ml_model.predict_proba([merchant.lower()])[0]
+    if probs.max() < 0.5:
+        return "Other"
+    return ml_model.classes_[probs.argmax()]
 
 def backfill_categories(user_id: int):
     db= SessionLocal()
